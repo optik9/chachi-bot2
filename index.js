@@ -1,7 +1,8 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const admin = require('firebase-admin');
-const puppeteer = require('puppeteer');
+const chromium = require('@sparticuz/chromium');
+const puppeteer = require('puppeteer-core');
 
 // Configuración del cliente
 const client = new Client({
@@ -9,7 +10,7 @@ const client = new Client({
         dataPath: '/tmp/.wwebjs_auth', // Usar /tmp para almacenar la sesión
     }),
     puppeteer: {
-        headless: false,
+        headless: true, // Usar modo headless
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -20,7 +21,7 @@ const client = new Client({
             '--single-process',
             '--disable-gpu'
         ],
-        executablePath: puppeteer.executablePath(),
+        executablePath: await chromium.executablePath(), // Usar Chromium optimizado
         timeout: 60000,
     }
 });

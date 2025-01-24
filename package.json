@@ -7,19 +7,19 @@
     "dev": "nodemon index.js",
     "vercel-build": "echo hello"
   },
-  
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "@adiwajshing/baileys": "^5.0.0",
+    "@sparticuz/chromium": "^131.0.1",
     "body-parser": "^1.20.3",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "firebase-admin": "latest",
     "puppeteer": "latest",
-    "puppeteer-core": "latest",
+    "puppeteer-core": "^24.1.1",
     "qrcode-terminal": "latest",
     "twilio": "^5.4.0",
     "whatsapp-web.js": "latest"
