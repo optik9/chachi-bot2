@@ -1,3 +1,8 @@
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+// Tu código existente aquí...
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const admin = require('firebase-admin');
@@ -427,3 +432,15 @@ initializeClient().then(client => {
 }).catch(error => {
     console.error('Error al inicializar el cliente:', error);
 });
+
+// Crear un servidor HTTP básico
+app.get('/', (req, res) => {
+    res.send('Bot de WhatsApp está en funcionamiento.');
+});
+
+app.listen(port, () => {
+    console.log(`Servidor escuchando en el puerto ${port}`);
+});
+
+// Exportar el servidor para Vercel
+module.exports = app;
