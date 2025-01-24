@@ -5,7 +5,9 @@ const puppeteer = require('puppeteer');
 
 // Configuración del cliente
 const client = new Client({
-    authStrategy: new LocalAuth(),
+    authStrategy: new LocalAuth({
+        dataPath: '/tmp/.wwebjs_auth', // Usar /tmp para almacenar la sesión
+    }),
     puppeteer: {
         headless: false,
         args: [
@@ -20,7 +22,6 @@ const client = new Client({
         ],
         executablePath: puppeteer.executablePath(),
         timeout: 60000,
-
     }
 });
 
@@ -66,6 +67,7 @@ const UNIT_TYPES = {
 // Mapas para almacenar estados y datos temporales
 const userStates = new Map();
 const tempSales = new Map();
+
 // Función para mostrar el carrito actual
 function formatCart(cart) {
     if (!cart || cart.length === 0) return 'Carrito vacío';
@@ -213,23 +215,22 @@ client.on('message', async msg => {
         }
 
         console.log(`Estado actual: ${currentState}`);
-       //tempSales.set(userNumber, currentSale);
 
         switch (currentState) {
-        case STATES.INITIAL:
-            if (messageContent === 'nueva venta') {
-            // Limpiar cualquier dato previo
-                userStates.set(userNumber, STATES.AWAITING_CLIENT_NAME);
-                // Inicializar una nueva venta limpia
-                tempSales.set(userNumber, initializeNewSale());
-              await msg.reply('Por favor, ingrese el nombre del cliente:');
-            } else {
-                await msg.reply(
-            '¡Bienvenido al sistema de ventas!\n\n' +
-            'Escriba "nueva venta" para comenzar.'
-        );
-    }
-    break;
+            case STATES.INITIAL:
+                if (messageContent === 'nueva venta') {
+                    // Limpiar cualquier dato previo
+                    userStates.set(userNumber, STATES.AWAITING_CLIENT_NAME);
+                    // Inicializar una nueva venta limpia
+                    tempSales.set(userNumber, initializeNewSale());
+                    await msg.reply('Por favor, ingrese el nombre del cliente:');
+                } else {
+                    await msg.reply(
+                        '¡Bienvenido al sistema de ventas!\n\n' +
+                        'Escriba "nueva venta" para comenzar.'
+                    );
+                }
+                break;
 
             case STATES.AWAITING_CLIENT_NAME:
                 currentSale.clientName = msg.body;
@@ -328,29 +329,29 @@ client.on('message', async msg => {
                         break;
                 }
                 break;
-                case STATES.EDITING_CART:
-                    const indexToDelete = parseInt(messageContent) - 1; // Convertir el número ingresado a índice (basado en 0)
-                
-                    if (isNaN(indexToDelete) || indexToDelete < 0 || indexToDelete >= currentSale.products.length) {
-                        await msg.reply('Por favor, ingrese un número válido que corresponda a un producto en el carrito.');
-                        return;
-                    }
-                
-                    // Eliminar el producto del carrito
-                    const removedProduct = currentSale.products.splice(indexToDelete, 1);
-                
-                    await msg.reply(
-                        `Producto eliminado: ${removedProduct[0].description}\n\n` +
-                        `${formatCart(currentSale.products)}\n\n` +
-                        '¿Qué desea hacer?\n' +
-                        '1. Agregar producto\n' +
-                        '2. Eliminar producto\n' +
-                        '3. Finalizar venta'
-                    );
-                
-                    userStates.set(userNumber, STATES.AWAITING_PRODUCT_ACTION); // Regresar al menú de acciones
-                    break;    
 
+            case STATES.EDITING_CART:
+                const indexToDelete = parseInt(messageContent) - 1; // Convertir el número ingresado a índice (basado en 0)
+
+                if (isNaN(indexToDelete) || indexToDelete < 0 || indexToDelete >= currentSale.products.length) {
+                    await msg.reply('Por favor, ingrese un número válido que corresponda a un producto en el carrito.');
+                    return;
+                }
+
+                // Eliminar el producto del carrito
+                const removedProduct = currentSale.products.splice(indexToDelete, 1);
+
+                await msg.reply(
+                    `Producto eliminado: ${removedProduct[0].description}\n\n` +
+                    `${formatCart(currentSale.products)}\n\n` +
+                    '¿Qué desea hacer?\n' +
+                    '1. Agregar producto\n' +
+                    '2. Eliminar producto\n' +
+                    '3. Finalizar venta'
+                );
+
+                userStates.set(userNumber, STATES.AWAITING_PRODUCT_ACTION); // Regresar al menú de acciones
+                break;
 
             case STATES.AWAITING_PAYMENT_METHOD:
                 const paymentMethod = Object.values(PAYMENT_METHODS)[parseInt(messageContent) - 1];
@@ -369,26 +370,26 @@ client.on('message', async msg => {
                 );
                 break;
 
-                case STATES.CONFIRMING:
-                    if (messageContent === 'si' || messageContent === 'sí') {
-                        try {
-                            await saveSale(userNumber, currentSale);
-                            await msg.reply('¡Venta registrada exitosamente!');
-                        } catch (error) {
-                            await msg.reply('Ocurrió un error al registrar la venta. Por favor, intente nuevamente.');
-                        }
-                        // Limpiar los datos temporales y el estado del usuario
-                        userStates.delete(userNumber);
-                        tempSales.delete(userNumber);
-                    } else if (messageContent === 'no') {
-                        // Limpiar los datos temporales y el estado del usuario
-                        userStates.delete(userNumber);
-                        tempSales.delete(userNumber);
-                        await msg.reply('Venta cancelada.');
-                    } else {
-                        await msg.reply('Por favor, escriba "sí" o "si" para confirmar o "no" para cancelar.');
+            case STATES.CONFIRMING:
+                if (messageContent === 'si' || messageContent === 'sí') {
+                    try {
+                        await saveSale(userNumber, currentSale);
+                        await msg.reply('¡Venta registrada exitosamente!');
+                    } catch (error) {
+                        await msg.reply('Ocurrió un error al registrar la venta. Por favor, intente nuevamente.');
                     }
-                    break;
+                    // Limpiar los datos temporales y el estado del usuario
+                    userStates.delete(userNumber);
+                    tempSales.delete(userNumber);
+                } else if (messageContent === 'no') {
+                    // Limpiar los datos temporales y el estado del usuario
+                    userStates.delete(userNumber);
+                    tempSales.delete(userNumber);
+                    await msg.reply('Venta cancelada.');
+                } else {
+                    await msg.reply('Por favor, escriba "sí" o "si" para confirmar o "no" para cancelar.');
+                }
+                break;
 
             default:
                 await msg.reply('Ocurrió un error. Por favor, intente nuevamente.');
@@ -396,8 +397,6 @@ client.on('message', async msg => {
                 tempSales.delete(userNumber);
                 break;
         }
-
-        //tempSales.set(userNumber, currentSale);
 
     } catch (error) {
         console.error('Error en el procesamiento del mensaje:', error);
