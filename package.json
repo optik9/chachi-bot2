@@ -3,14 +3,28 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node api/index.js",
-    "dev": "nodemon api/index.js",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
     "vercel-build": "echo hello"
   },
   
+  "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
-
-  
+  "description": "",
+  "dependencies": {
+    "@adiwajshing/baileys": "^5.0.0",
+    "body-parser": "^1.20.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "firebase-admin": "latest",
+    "puppeteer": "latest",
+    "puppeteer-core": "latest",
+    "qrcode-terminal": "latest",
+    "twilio": "^5.4.0",
+    "whatsapp-web.js": "latest"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
 }
